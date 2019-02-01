@@ -80,7 +80,7 @@ func (s *Server) handleConnect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if proxy.IsDirect() {
+	if proxy.IsDirect() || proxy.IsSOCKS() {
 		w.WriteHeader(http.StatusOK)
 	}
 
