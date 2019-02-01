@@ -6,7 +6,7 @@ pacproxy is a proxy that parses pac file and start a simple http proxy which wil
 
 ## Install
 
-Ensure that `Go` enviroment has been properly setup.
+Ensure that `Go（>=1.11.5）` enviroment has been properly setup.
 
 ```bash
 go get -u -v github.com/darren/pacroxy
