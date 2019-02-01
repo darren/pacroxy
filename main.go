@@ -12,14 +12,6 @@ import (
 	"github.com/darren/gpac"
 )
 
-var scripts = `
-  function FindProxyForURL(url, host) {
-    if (host == "www.baidu.com") return "DIRECT";
-    if (isPlainHostName(host)) return "DIRECT";
-    else return "PROXY 10.0.1.254:8080; PROXY 127.0.0.1:8080; DIRECT";
-  }
-`
-
 var pacfile = flag.String("p", "wpad.dat", "pac file to load")
 var addr = flag.String("l", "127.0.0.1:8080", "Listening address")
 
@@ -31,7 +23,7 @@ type Server struct {
 
 func (s *Server) handle(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodConnect {
-		s.handleTunneling(w, r)
+		s.handleConnect(w, r)
 	} else {
 		s.handleHTTP(w, r)
 	}
@@ -52,7 +44,7 @@ func (p *peekedConn) Read(data []byte) (int, error) {
 	return p.r.Read(data)
 }
 
-func (s *Server) handleTunneling(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleConnect(w http.ResponseWriter, r *http.Request) {
 	host, _, _ := net.SplitHostPort(r.Host)
 	url := fmt.Sprintf("https://%s/", host)
 
