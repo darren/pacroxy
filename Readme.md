@@ -22,6 +22,6 @@ curl -x 127.0.0.1:9999 https://example.com
 
 ## Note
 
-This is a simple tool still in development, use at your own risk.
-
+1. This is a simple tool still in development, use at your own risk.
+2. For https request only `https://example.com/` will be passed to FindProxyForURL, ie: no query path is passed
 
