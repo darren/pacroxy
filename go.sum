@@ -1,5 +1,5 @@
-github.com/darren/gpac v0.0.0-20190202032648-ef6de5cf024c h1:lbhsyTFRoUctsauaecqRoUmqPY0kwUXu7GT/vFdkfpY=
-github.com/darren/gpac v0.0.0-20190202032648-ef6de5cf024c/go.mod h1:fK76ZiaaM0f4rW2A3sTomlo/wlY9jRV07KJ66DbOAXs=
+github.com/darren/gpac v0.0.0-20190202101348-5cfe31de9c67 h1:3p+kFLd+UBAGRK8VnkpuDZB0pTW6xUYpF1DyTHGYh50=
+github.com/darren/gpac v0.0.0-20190202101348-5cfe31de9c67/go.mod h1:fK76ZiaaM0f4rW2A3sTomlo/wlY9jRV07KJ66DbOAXs=
 github.com/robertkrimen/otto v0.0.0-20180617131154-15f95af6e78d h1:1VUlQbCfkoSGv7qP7Y+ro3ap1P1pPZxgdGVqiTVy5C4=
 github.com/robertkrimen/otto v0.0.0-20180617131154-15f95af6e78d/go.mod h1:xvqspoSXJTIpemEonrMDFq6XzwHYYgToXWj5eRX1OtY=
 gopkg.in/sourcemap.v1 v1.0.5 h1:inv58fC9f9J3TK2Y2R1NPntXEn3/wjWHkonhIUODNTI=
