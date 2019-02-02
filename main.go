@@ -110,6 +110,8 @@ func transfer(destination io.WriteCloser, source io.ReadCloser) {
 }
 
 func (s *Server) handleHTTP(w http.ResponseWriter, req *http.Request) {
+	var perr error
+
 	proxies, err := s.pac.FindProxy(req.URL.String())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
@@ -119,7 +121,8 @@ func (s *Server) handleHTTP(w http.ResponseWriter, req *http.Request) {
 	req.RequestURI = ""
 
 	for _, proxy := range proxies {
-		resp, err := proxy.Do(req)
+		resp, err := proxy.Transport().RoundTrip(req)
+		perr = err
 		if err != nil {
 			continue
 		}
@@ -136,7 +139,7 @@ func (s *Server) handleHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	log.Printf("[%s] %s %v FAILED", req.RemoteAddr, req.Method, req.URL)
+	log.Printf("[%s] %s %v FAILED: %v", req.RemoteAddr, req.Method, req.URL, perr)
 	http.Error(w, "No Proxy Available", http.StatusServiceUnavailable)
 }
 
