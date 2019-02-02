@@ -118,8 +118,6 @@ func (s *Server) handleHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	req.RequestURI = ""
-
 	for _, proxy := range proxies {
 		resp, err := proxy.Transport().RoundTrip(req)
 		perr = err
