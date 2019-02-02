@@ -6,7 +6,7 @@ pacproxy is a proxy that parses pac file and start a simple http proxy which wil
 
 ## Install
 
-Download prebuild binaries from [releases](https://github.com/darren/pacroxy/releases)
+Download prebuilt binaries from [releases](https://github.com/darren/pacroxy/releases)
 
 
 To build from source ensure that `Go（>=1.11.5）` environment has been properly setup.
