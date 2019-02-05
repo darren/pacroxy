@@ -9,17 +9,24 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/darren/gpac"
 )
 
 var pacfile = flag.String("p", "wpad.dat", "pac file to load")
 var addr = flag.String("l", "127.0.0.1:8080", "Listening address")
+var refresh = flag.Duration("r", 0, "Time duration to refresh pac file")
 
 // Server the proxy server
 type Server struct {
 	http.Server
-	pac *gpac.Parser
+	sync.Mutex
+
+	pacfile         string
+	pac             *gpac.Parser
+	refreshDuration time.Duration
 }
 
 func (s *Server) handle(w http.ResponseWriter, r *http.Request) {
@@ -197,6 +204,57 @@ func (s *Server) handleHTTP(w http.ResponseWriter, req *http.Request) {
 	http.Error(w, "No Proxy Available", http.StatusServiceUnavailable)
 }
 
+func (s *Server) watch() {
+	for {
+		time.Sleep(s.refreshDuration)
+		log.Printf("Try reloading from %s", s.pacfile)
+		pac, err := gpac.From(s.pacfile)
+
+		if pac.Source() == s.pac.Source() {
+			log.Println("Pac file not changed")
+			continue
+		}
+
+		if err != nil {
+			log.Println("Refresh pac failed: %v", err)
+		} else {
+			log.Println("Refresh pac succeeded")
+		}
+
+		s.Lock()
+		s.pac = pac
+		s.Unlock()
+	}
+}
+
+// Start starts the proxy server
+func (s *Server) Start() error {
+	log.Printf("Start proxy on %s", s.Server.Addr)
+	if s.refreshDuration > 0 {
+		log.Printf("Start pac file watcher on: %s, refresh time: %v", s.pacfile, s.refreshDuration)
+		go s.watch()
+	}
+	s.Handler = http.HandlerFunc(s.handle)
+	return s.ListenAndServe()
+}
+
+// New create the proxy server
+func New(addr string, pacf string, rintval time.Duration) (*Server, error) {
+	pac, err := gpac.From(pacf)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Server{
+		Server: http.Server{
+			Addr: addr,
+		},
+		pac:             pac,
+		pacfile:         pacf,
+		refreshDuration: rintval,
+	}, nil
+}
+
 func cloneHeader(dst, src http.Header) {
 	for k, vv := range src {
 		for _, v := range vv {
@@ -209,20 +267,10 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	flag.Parse()
 
-	log.Printf("Loading pac from %s", *pacfile)
-	pac, err := gpac.From(*pacfile)
+	server, err := New(*addr, *pacfile, *refresh)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Printf("Start proxy on %s", *addr)
-	server := Server{
-		Server: http.Server{
-			Addr: *addr,
-		},
-		pac: pac,
-	}
-
-	server.Handler = http.HandlerFunc(server.handle)
-	log.Fatal(server.ListenAndServe())
+	log.Fatal(server.Start())
 }
