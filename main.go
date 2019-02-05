@@ -89,10 +89,11 @@ func (s *Server) handleConnect(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Hijacking not supported", http.StatusInternalServerError)
 		return
 	}
-	src, buf, err := hijacker.Hijack()
 
+	src, buf, err := hijacker.Hijack()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		return
 	}
 
 	src = combine(buf, src)
