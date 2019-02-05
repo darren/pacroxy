@@ -150,6 +150,7 @@ func cloneHeader(dst, src http.Header) {
 }
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	flag.Parse()
 
 	log.Printf("Loading pac from %s", *pacfile)
