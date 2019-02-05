@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strings"
 
 	"github.com/darren/gpac"
 )
@@ -44,9 +45,61 @@ func (p *peekedConn) Read(data []byte) (int, error) {
 	return p.r.Read(data)
 }
 
+// Copied from https://github.com/golang/go/blob/master/src/net/http/httputil/reverseproxy.go
+
+// Hop-by-hop headers. These are removed when sent to the backend.
+// http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
+var hopHeaders = []string{
+	"Connection",
+	"Keep-Alive",
+	"Proxy-Authenticate",
+	"Proxy-Authorization",
+	"Te", // canonicalized version of "TE"
+	"Trailers",
+	"Transfer-Encoding",
+	"Upgrade",
+}
+
+// removeConnectionHeaders removes hop-by-hop headers listed in the "Connection" header of h.
+// See RFC 7230, section 6.1
+func removeConnectionHeaders(h http.Header) {
+	if c := h.Get("Connection"); c != "" {
+		for _, f := range strings.Split(c, ",") {
+			if f = strings.TrimSpace(f); f != "" {
+				h.Del(f)
+			}
+		}
+	}
+}
+
+func removeHopHeaders(h http.Header) {
+	for _, k := range hopHeaders {
+		hv := h.Get(k)
+		if hv == "" {
+			continue
+		}
+		if k == "Te" && hv == "trailers" {
+			continue
+		}
+		h.Del(k)
+	}
+}
+
+// prune clean http header
+func prune(h http.Header) {
+	removeConnectionHeaders(h)
+	removeHopHeaders(h)
+}
+
 func (s *Server) handleConnect(w http.ResponseWriter, r *http.Request) {
-	host, _, _ := net.SplitHostPort(r.Host)
-	url := fmt.Sprintf("https://%s/", host)
+	host, port, _ := net.SplitHostPort(r.Host)
+	var url string
+
+	if port == "443" {
+		url = fmt.Sprintf("https://%s/", host)
+	} else {
+		url = fmt.Sprintf("https://%s:%s/", host, port)
+	}
 
 	proxies, err := s.pac.FindProxy(url)
 	if err != nil {
@@ -98,13 +151,13 @@ func (s *Server) handleConnect(w http.ResponseWriter, r *http.Request) {
 
 	src = combine(buf, src)
 
-	go transfer(dst, src)
-	go transfer(src, dst)
+	go pipe(dst, src)
+	go pipe(src, dst)
 
 	log.Printf("[%s] %s %v [%v]", r.RemoteAddr, r.Method, url, proxy)
 }
 
-func transfer(destination io.WriteCloser, source io.ReadCloser) {
+func pipe(destination io.WriteCloser, source io.ReadCloser) {
 	defer destination.Close()
 	defer source.Close()
 	io.Copy(destination, source)
@@ -118,6 +171,8 @@ func (s *Server) handleHTTP(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
+
+	prune(req.Header)
 
 	for _, proxy := range proxies {
 		resp, err := proxy.Transport().RoundTrip(req)
