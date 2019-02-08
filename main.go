@@ -200,8 +200,12 @@ func (s *Server) handleHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	log.Printf("[%s] %s %v FAILED: %v", req.RemoteAddr, req.Method, req.URL, perr)
-	http.Error(w, "No Proxy Available", http.StatusServiceUnavailable)
+	if perr != nil {
+		log.Printf("[%s] %s %v FAILED: %v", req.RemoteAddr, req.Method, req.URL, perr)
+		http.Error(w, perr.Error(), http.StatusServiceUnavailable)
+	} else {
+		http.Error(w, "No proxy found", http.StatusServiceUnavailable)
+	}
 }
 
 func (s *Server) watch() {
