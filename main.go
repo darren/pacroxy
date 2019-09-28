@@ -42,7 +42,7 @@ type peekedConn struct {
 	r io.Reader
 }
 
-// concat combine conn and peeked buffer
+// combine combines conn and peeked buffer
 func combine(peeked io.Reader, conn net.Conn) *peekedConn {
 	r := io.MultiReader(peeked, conn)
 	return &peekedConn{conn, r}
@@ -220,7 +220,7 @@ func (s *Server) watch() {
 		}
 
 		if err != nil {
-			log.Println("Refresh pac failed: %v", err)
+			log.Printf("Refresh pac failed: %v", err)
 		} else {
 			log.Println("Refresh pac succeeded")
 		}
