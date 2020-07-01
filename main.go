@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -245,7 +246,16 @@ func (s *Server) Start() error {
 // New create the proxy server
 func New(addr string, pacf string, rintval time.Duration) (*Server, error) {
 	pac, err := gpac.From(pacf)
-	if err != nil {
+	if os.IsNotExist(err) {
+		log.Print("Warn: using direct connection")
+		pac, _ = gpac.New(
+			`
+			function FindProxyForURL(url, host) {
+				return "DIRECT";
+			}			
+			`,
+		)
+	} else if err != nil {
 		return nil, err
 	}
 
